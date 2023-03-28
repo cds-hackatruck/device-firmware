@@ -1,0 +1,206 @@
+[
+    {
+        "id": "b49fee77c4c27a36",
+        "type": "tab",
+        "label": "Khran Firmware Flow",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "da7449eb2608c5d8",
+        "type": "ibmiot in",
+        "z": "b49fee77c4c27a36",
+        "authentication": "apiKey",
+        "apiKey": "c15915a236e4937c",
+        "inputType": "evt",
+        "logicalInterface": "",
+        "ruleId": "",
+        "deviceId": "accKhran",
+        "applicationId": "",
+        "deviceType": "+",
+        "eventType": "+",
+        "commandType": "",
+        "format": "json",
+        "name": "IBM IoT",
+        "service": "registered",
+        "allDevices": "",
+        "allApplications": "",
+        "allDeviceTypes": true,
+        "allLogicalInterfaces": "",
+        "allEvents": true,
+        "allCommands": "",
+        "allFormats": "",
+        "qos": 0,
+        "x": 90,
+        "y": 140,
+        "wires": [
+            [
+                "1cb10aeb157dda24"
+            ]
+        ]
+    },
+    {
+        "id": "6de29baaa7c03439",
+        "type": "change",
+        "z": "b49fee77c4c27a36",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload.timestamp",
+                "pt": "msg",
+                "to": "",
+                "tot": "date"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 500,
+        "y": 140,
+        "wires": [
+            [
+                "ed7d92ba529eef46"
+            ]
+        ]
+    },
+    {
+        "id": "ceb4cf8292c7d19b",
+        "type": "http in",
+        "z": "b49fee77c4c27a36",
+        "name": "",
+        "url": "/khran/read",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 120,
+        "y": 340,
+        "wires": [
+            [
+                "8ee81a1ea84d38f1"
+            ]
+        ]
+    },
+    {
+        "id": "fc55af656f4dd406",
+        "type": "http response",
+        "z": "b49fee77c4c27a36",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 610,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "6924e26667faca3e",
+        "type": "debug",
+        "z": "b49fee77c4c27a36",
+        "name": "debug get",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 630,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "8ee81a1ea84d38f1",
+        "type": "function",
+        "z": "b49fee77c4c27a36",
+        "name": "function 3",
+        "func": "msg.payload = Object()\nmsg.payload.timestamp = parseInt(global.get('timestamp')) || 0\nmsg.payload.gforce = parseFloat(global.get('gforce')) || 0\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 340,
+        "wires": [
+            [
+                "fc55af656f4dd406",
+                "6924e26667faca3e"
+            ]
+        ]
+    },
+    {
+        "id": "ed7d92ba529eef46",
+        "type": "function",
+        "z": "b49fee77c4c27a36",
+        "name": "function 4",
+        "func": "global.set('timestamp', msg.payload.timestamp);\nglobal.set('gforce', msg.payload.gforce);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 140,
+        "wires": [
+            [
+                "eb2e078ed33b9796"
+            ]
+        ]
+    },
+    {
+        "id": "eb2e078ed33b9796",
+        "type": "debug",
+        "z": "b49fee77c4c27a36",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "1cb10aeb157dda24",
+        "type": "delay",
+        "z": "b49fee77c4c27a36",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "5",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 280,
+        "y": 140,
+        "wires": [
+            [
+                "6de29baaa7c03439"
+            ]
+        ]
+    },
+    {
+        "id": "c15915a236e4937c",
+        "type": "ibmiot",
+        "name": "MatheusIoT001",
+        "keepalive": "60",
+        "serverName": "74ykm4.messaging.internetofthings.ibmcloud.com",
+        "cleansession": true,
+        "appId": "",
+        "shared": false
+    }
+]
