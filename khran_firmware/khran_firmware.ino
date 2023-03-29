@@ -6,6 +6,16 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
+#include <TinyGPS++.h>
+#include <SoftwareSerial.h>
+
+static const int RXPin = D5, TXPin = D6;
+static const uint32_t GPSBaud = 9600;
+// The TinyGPS++ object
+TinyGPSPlus gps;
+// The serial connection to the GPS device
+SoftwareSerial ss(RXPin, TXPin);
+
 //atualize SSID e senha WiFi
 const char* ssid = "HackaTruckVisitantes";
 const char* password = "";
@@ -43,6 +53,8 @@ float azTotal = 0;
 float axAverage = 0;
 float ayAverage = 0;
 float azAverage = 0;
+float l_lat = 0;
+float l_lng = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -73,6 +85,8 @@ void setup() {
     ayReadings[thisReading] = 0;
     azReadings[thisReading] = 0;
   }
+
+  ss.begin(GPSBaud);
 }
 
 void loop() {
@@ -120,36 +134,65 @@ void loop() {
   float gy = fabs(ayAverage)/G;
   float gz = fabs(azAverage - G)/G;
 
+  float lat = 0;
+  float lng = 0;
+  while (ss.available() > 0){
+    gps.encode(ss.read());
+    if (gps.location.isUpdated()){
+      lat = gps.location.lat();
+      lng = gps.location.lng();
+
+      if(lat != 0 || lng != 0){
+        l_lat = lat;
+        l_lng = lng;
+        break;
+      }
+    }
+  }
+
+  if(lat != 0){
+    Serial.println("new Latitude");
+  }
+
   if(gx > 1.5 || gy > 1.5 || gz > 1.5){
     float max_gforce = max(max(gx, gy), gz);
     
     //get GPS positioning data
+    Serial.print("Latitude= "); 
+    Serial.print(l_lat, 6);
+    Serial.print(" Longitude= "); 
+    Serial.println(l_lng, 6);
 
     Serial.print("Crash of ");
     Serial.print(max_gforce);
     Serial.println("Gs");
 
     char TempString[32];  //  array de character temporario
-
     // dtostrf( [Float variable] , [Minimum SizeBeforePoint] , [sizeAfterPoint] , [WhereToStoreIt] )
     dtostrf(max_gforce, 2, 1, TempString);
     String gforce =  String(TempString);
+
+    dtostrf(l_lat, 2, 6, TempString);
+    String latstring =  String(TempString);
+
+    dtostrf(l_lng, 2, 6, TempString);
+    String lngstring =  String(TempString);
 
     // Prepara JSON para IOT Platform
     int length = 0;
 
 
     //String payload = "{\"d\":{\"umidade\":\"" + umidadestr + "\"}}";
-    String payload =  "{\"gforce\": \""+gforce+"\"}";
+    String payload =  "{\"gforce\": \""+gforce+"\", \"pos\": {\"latitute\":\"" +l_lat+ "\", \"longitude\":\""+l_lng+"\"}}";
 
 
-    length = payload.length();
-    Serial.print(F("\nData length"));
-    Serial.println(length);
+    // length = payload.length();
+    // Serial.print(F("\nData length"));
+    // Serial.println(length);
 
 
-    Serial.print("Sending payload: ");
-    Serial.println(payload);
+    // Serial.print("Sending payload: ");
+    // Serial.println(payload);
 
 
     if (client.publish(topic, (char*) payload.c_str())) {
