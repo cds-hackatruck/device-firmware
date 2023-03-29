@@ -9,6 +9,8 @@
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 
+const bool use_gps = false;
+
 static const int RXPin = D5, TXPin = D6;
 static const uint32_t GPSBaud = 9600;
 // The TinyGPS++ object
@@ -136,16 +138,18 @@ void loop() {
 
   float lat = 0;
   float lng = 0;
-  while (ss.available() > 0){
-    gps.encode(ss.read());
-    if (gps.location.isUpdated()){
-      lat = gps.location.lat();
-      lng = gps.location.lng();
+  if(use_gps){
+    while (ss.available() > 0){
+      gps.encode(ss.read());
+      if (gps.location.isUpdated()){
+        lat = gps.location.lat();
+        lng = gps.location.lng();
 
-      if(lat != 0 || lng != 0){
-        l_lat = lat;
-        l_lng = lng;
-        break;
+        if(lat != 0 || lng != 0){
+          l_lat = lat;
+          l_lng = lng;
+          break;
+        }
       }
     }
   }
