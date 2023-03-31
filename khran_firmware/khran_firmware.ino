@@ -9,7 +9,7 @@
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 
-const bool use_gps = false;
+const bool use_gps = true;
 
 static const int RXPin = D5, TXPin = D6;
 static const uint32_t GPSBaud = 9600;
@@ -19,10 +19,21 @@ TinyGPSPlus gps;
 SoftwareSerial ss(RXPin, TXPin);
 
 //atualize SSID e senha WiFi
-const char* ssid = "HackaTruckVisitantes";
-const char* password = "";
+const char* ssid = "galaxys21fe";
+const char* password = "adivinha";
 
 #define LED_BUILTIN D4
+
+// set the pins for the buzzer and button
+const int buzzerPin = D3;
+const int buttonPin = D4;
+
+// set the initial state of the buzzer and button
+bool buzzerState = LOW;
+bool buttonState = HIGH;
+bool lastButtonState = HIGH;
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50;
 
 //Atualize os valores de Org, device type, device id e token
 #define ORG "74ykm4"
@@ -57,6 +68,13 @@ float ayAverage = 0;
 float azAverage = 0;
 float l_lat = 0;
 float l_lng = 0;
+unsigned long start_time = 0;
+const unsigned long duration = 10000;
+
+unsigned long getremainingtime(){
+  unsigned long elapsedtime = millis() - start_time;
+  return elapsedtime;
+}
 
 void setup() {
   Serial.begin(9600);
@@ -89,9 +107,52 @@ void setup() {
   }
 
   ss.begin(GPSBaud);
+
+// set the pin modes for the buzzer and button
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  // set the initial state of the buzzer
+  buzzerState = LOW;
+  digitalWrite(buzzerPin, buzzerState);
+  start_time = 50000;
 }
 
 void loop() {
+  if (getremainingtime() < duration){
+    buzzerState = HIGH;
+    int reading = digitalRead(buttonPin);
+
+    // check if the button state has changed
+    if (reading != lastButtonState) {
+      lastDebounceTime = millis();
+    }
+
+    // check if the debounce delay has passed
+    if ((millis() - lastDebounceTime) > debounceDelay) {
+      // if the button state has changed, update the button state
+      if (reading != buttonState) {
+        buttonState = reading;
+
+        // if the button is pressed, turn off the buzzer
+        if (buttonState == LOW) {
+          start_time -= duration;
+          buzzerState = LOW;
+          digitalWrite(buzzerPin, buzzerState);
+        }
+          
+        }
+      }
+
+    // update the last button state
+    lastButtonState = reading;
+  }
+  else{
+    buzzerState = LOW;
+  }
+  digitalWrite(buzzerPin, buzzerState);
+  
+
   if (!!!client.connected()) {
     Serial.print("Reconnecting client to ");
     Serial.println(server);
@@ -188,15 +249,14 @@ void loop() {
 
     //String payload = "{\"d\":{\"umidade\":\"" + umidadestr + "\"}}";
     String payload =  "{\"gforce\": \""+gforce+"\", \"pos\": {\"latitute\":\"" +l_lat+ "\", \"longitude\":\""+l_lng+"\"}}";
-
-
+    
     // length = payload.length();
     // Serial.print(F("\nData length"));
     // Serial.println(length);
 
 
-    // Serial.print("Sending payload: ");
-    // Serial.println(payload);
+    Serial.print("Sending payload: ");
+    Serial.println(payload);
 
 
     if (client.publish(topic, (char*) payload.c_str())) {
@@ -209,6 +269,8 @@ void loop() {
       Serial.println("Publish failed");
       Serial.println(client.state());
     }
+
+    start_time = millis();
   }
 
   delay(10);
